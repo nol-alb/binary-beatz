@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #E6E6FA;  /* Lilac color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input[type="text"], input[type="number"] {
+            width: 200px;
+            padding: 5px;
+            margin: 5px 0;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+    <!-- Add Strudel script here -->
+    <script src="https://unpkg.com/@strudel/web@1.0.3"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Binary Beatz</h1>
+        
+
+        <h2>Decimal to Binary</h2>
+        <div>
+            <input type="number" id="decimal" placeholder="Decimal will appear here" readonly>
+            <input type="text" id="binary_answer" placeholder="Enter binary equivalent">
+            <input type="hidden" id="expected_binary" name="expected_binary">
+            <button onclick="generateDecimal()">Generate Decimal</button>
+            
+            <button onclick="checkBinary()">Load Binary</button>
+
+            <button type="submit">Check Answer</button>
+        </div>
+
+        <div class="result" id="result">
+            {% if result %}
+            {{ result }}
+            {% endif %}
+        </div>
+
+        <div>
+            <button id="play">Play Sound</button>
+            <button id="stop">Stop Sound</button>
+        </div>
+    </div>
+
+    <script>
+        let stringvar = '';
+        let correct = true;
+
+
+        function generateDecimal() {
+            fetch('/generate_decimal')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('decimal').value = data.decimal;
+                    document.getElementById('expected_binary').value = data.binary;
+                    document.getElementById('binary_answer').value = '';
+                    document.getElementById('result').innerText = '';
+                });
+        }
+
+        function checkBinary() {
+            const decimal = document.getElementById('decimal').value;
+            const binary_answer = document.getElementById('binary_answer').value;
+            const expected_binary = document.getElementById('expected_binary').value;
+
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `decimal=${decimal}&expected_binary=${expected_binary}`,
+            })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const result = doc.querySelector('.result').innerText;
+                document.getElementById('result').innerText = result;
+            });
+        }
+
+        // Update stringvar when binary input changes
+        document.getElementById('binary_answer').addEventListener('input', function() {
+            stringvar = this.value;
+        });
+
+        // Strudel initialization
+        initStrudel({
+            prebake: () => samples('github:tidalcycles/dirt-samples'),
+        });
+
+        document.getElementById('play').addEventListener('click', () => {
+            if (stringvar) {
+                let newstring = "";
+                console.log(stringvar);
+                newstring = stringvar.split('').map(char => char === '1' ? 'bd' : '-').join(' ');
+                newstring = newstring+ ",hh*16";
+                let modifiedString = newstring.split(' ').reduce(({ result, toggle }, word) => ({
+    result: result + (word === 'bd' ? (toggle ? ' sd' : ' bd') : ' ' + word),
+    toggle: word === 'bd' ? !toggle : toggle
+}), { result: '', toggle: false }).result.trim();
+                console.log(modifiedString);
+                sound("white").play();
+                //s(modifiedString).play();
+            } else {
+                alert('Please enter a binary number first.');
+            }
+        });
+
+        document.getElementById('stop').addEventListener('click', () => hush());
+    </script>
+</body>
+</html>
